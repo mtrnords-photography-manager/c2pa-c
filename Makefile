@@ -7,25 +7,31 @@ ifeq ($(OS), Linux)
 CFLAGS = -pthread -Wl,--no-as-needed -ldl -lm
 endif
 
+install-targets: SHELL := /bin/bash
+install-targets:
+	@while IFS= read -r line || [[ -n "$$line" ]]; do \
+		rustup target add $$line; \
+	done < targets.txt
+
 release: 
 	cargo build --release
 	cbindgen --config cbindgen.toml --crate c2pa-c --output include/c2pa.h --lang c
 
-build-musl: SHELL := /bin/bash
-build-musl:
-	# compile musl dylib for ARM
-	rustup target add aarch64-unknown-linux-musl
-	TARGET_CC=clang TARGET_AR=llvm-ar RUSTFLAGS="-Ctarget-feature=-crt-static -Clink-self-contained=yes" cargo build --release --target aarch64-unknown-linux-musl
+build-targets: SHELL := /bin/bash
+build-targets:
+	@while IFS= read -r line || [[ -n "$$line" ]]; do \
+		cargo build --release --target $$line; \
+		cbindgen --config cbindgen.toml --crate c2pa-c --output include/c2pa.h --lang c; \
+	done < targets.txt
 
-	# compile dylib for x86
-	rustup target add x86_64-unknown-linux-gnu
-	RUSTFLAGS="-Clinker=x86_64-linux-gnu-gcc" cargo build --release --target x86_64-unknown-linux-gnu
-	
-	cbindgen --config cbindgen.toml --crate c2pa-c --output include/c2pa.h --lang c; \
-	
+build-musl: 
+	cross build --release --target aarch64-unknown-linux-musl
+	cbindgen --config cbindgen.toml --crate c2pa-c --output include/c2pa.h --lang c
+
 build-docker:
 	mkdir -p dist
 	docker run \
+		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v dist:/home/runner/dist \
 		--rm \
 		-it $$(docker build -q .) \
