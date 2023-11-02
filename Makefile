@@ -7,32 +7,21 @@ ifeq ($(OS), Linux)
 CFLAGS = -pthread -Wl,--no-as-needed -ldl -lm
 endif
 
-install-targets: SHELL := /bin/bash
-install-targets:
-	while IFS= read -r line || [[ -n "$$line" ]]; do \
-		rustup target add $$line; \
-	done < targets.txt
-
 release: 
 	cargo build --release
 	cbindgen --config cbindgen.toml --crate c2pa-c --output include/c2pa.h --lang c
 
-build-targets: SHELL := /bin/bash
-build-targets:
-	while IFS= read -r line || [[ -n "$$line" ]]; do \
-		if [[ $$line == *-musl ]]; then \
-			echo "Building for musl"; \
-			CC_aarch64_unknown_linux_musl=clang \
-			AR_aarch64_unknown_linux_musl=llvm-ar \
-			CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" \
-			RUSTFLAGS="-C target-feature=-crt-static" \
-			cargo build --release --target $$line; \
-		else \
-			echo "Non-musl build"; \
-			cargo build --release --target $$line; \
-		fi; \
-		cbindgen --config cbindgen.toml --crate c2pa-c --output include/c2pa.h --lang c; \
-	done < targets.txt
+build-musl: SHELL := /bin/bash
+build-musl:
+	# compile musl dylib for ARM
+	rustup target add aarch64-unknown-linux-musl
+	TARGET_CC=clang TARGET_AR=llvm-ar RUSTFLAGS="-Ctarget-feature=-crt-static -Clink-self-contained=yes" cargo build --release --target aarch64-unknown-linux-musl
+
+	# compile dylib for x86
+	rustup target add x86_64-unknown-linux-gnu
+	RUSTFLAGS="-Clinker=x86_64-linux-gnu-gcc" cargo build --release --target x86_64-unknown-linux-gnu
+	
+	cbindgen --config cbindgen.toml --crate c2pa-c --output include/c2pa.h --lang c; \
 	
 build-docker:
 	mkdir -p dist
