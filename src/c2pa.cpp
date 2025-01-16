@@ -81,8 +81,11 @@ namespace c2pa
     /// @throws a C2pa::Exception for errors encountered by the C2PA library.
     optional<string> read_file(const filesystem::path &source_path, const optional<path> data_dir)
     {
-        const char *dir = data_dir.has_value() ? data_dir.value().c_str() : nullptr;
-        char *result = c2pa_read_file(source_path.c_str(), dir);
+        // Convert paths to UTF-8 strings
+        const string source_path_str = source_path.string();
+        const char *dir = data_dir.has_value() ? data_dir.value().string().c_str() : nullptr;
+        
+        char *result = c2pa_read_file(source_path_str.c_str(), dir);
         if (result == nullptr)
         {
             auto exception = c2pa::Exception();
@@ -104,7 +107,11 @@ namespace c2pa
     /// @throws a C2pa::Exception for errors encountered by the C2PA library.
     string read_ingredient_file(const path &source_path, const path &data_dir)
     {
-        char *result = c2pa_read_ingredient_file(source_path.c_str(), data_dir.c_str());
+        // Convert paths to UTF-8 strings
+        const string source_path_str = source_path.string();
+        const string data_dir_str = data_dir.string();
+        
+        char *result = c2pa_read_ingredient_file(source_path_str.c_str(), data_dir_str.c_str());
         if (result == NULL)
         {
             throw c2pa::Exception();
@@ -127,11 +134,14 @@ namespace c2pa
                    c2pa::SignerInfo *signer_info,
                    const std::optional<path> data_dir)
     {
-        const char *dir = data_dir.has_value() ? data_dir.value().c_str() : NULL;
-        char *result = c2pa_sign_file(source_path.c_str(), dest_path.c_str(), manifest, signer_info, dir);
+        // Convert paths to UTF-8 strings
+        const string source_path_str = source_path.string();
+        const string dest_path_str = dest_path.string();
+        const char *dir = data_dir.has_value() ? data_dir.value().string().c_str() : NULL;
+        
+        char *result = c2pa_sign_file(source_path_str.c_str(), dest_path_str.c_str(), manifest, signer_info, dir);
         if (result == NULL)
         {
-
             throw c2pa::Exception();
         }
         c2pa_release_string(result);

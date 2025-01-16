@@ -32,6 +32,7 @@
 #endif
 
 #include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <optional> // C++17

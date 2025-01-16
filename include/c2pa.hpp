@@ -31,6 +31,7 @@
 #pragma warning(disable : 4505)
 #endif
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
