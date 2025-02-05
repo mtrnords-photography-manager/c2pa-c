@@ -30,6 +30,13 @@ string read_text_file(const fs::path &path)
     return contents.data();
 }
 
+vector<unsigned char> ed25519_signer(const std::vector<unsigned char> &data)
+{
+    fs::path private_key_path = fs::path(__FILE__).parent_path() / "../tests/fixtures/ed25519.pem";
+    string private_key = read_text_file(private_key_path).data();
+    return c2pa::ed25519_sign(data, private_key.c_str());
+};
+
 TEST(Builder, SignFile)
 {
 
@@ -37,7 +44,7 @@ TEST(Builder, SignFile)
 
     // Construct the paths relative to the current directory
     fs::path manifest_path = current_dir / "../tests/fixtures/training.json";
-    fs::path certs_path = current_dir / "../tests/fixtures/es256_certs.pem";
+    fs::path certs_path = current_dir / "../tests/fixtures/ed25519.pub";
     fs::path image_path = current_dir / "../tests/fixtures/A.jpg";
     fs::path signed_image_path = current_dir / "../tests/fixtures/A.jpg";
     fs::path output_path = current_dir / "../target/example/training.jpg";
@@ -48,6 +55,85 @@ TEST(Builder, SignFile)
         auto certs = read_text_file(certs_path);
 
         // create a signer
+        c2pa::Signer signer = c2pa::Signer(ed25519_signer, Ed25519, certs, "http://timestamp.digicert.com");
+
+        std::remove(output_path.c_str()); // remove the file if it exists
+
+        auto builder = c2pa::Builder(manifest);
+        builder.add_resource("thumbnail", image_path);
+
+        string ingredient_json = "{\"title\":\"Test Ingredient\"}";
+        builder.add_ingredient(ingredient_json, signed_image_path);
+        auto manifest_data = builder.sign(signed_image_path, output_path, signer);
+        auto reader = c2pa::Reader(output_path);
+        auto json = reader.json();
+        ASSERT_TRUE(std::filesystem::exists(output_path));
+    }
+    catch (c2pa::Exception const &e)
+    {
+        FAIL() << "Failed: C2pa::Builder: " << e.what() << endl;
+    };
+};
+
+TEST(Builder, SignFileInfo)
+{
+
+    fs::path current_dir = fs::path(__FILE__).parent_path();
+
+    // Construct the paths relative to the current directory
+    fs::path manifest_path = current_dir / "../tests/fixtures/training.json";
+    fs::path certs_path = fs::path(__FILE__).parent_path() / "../tests/fixtures/es256.pub";
+    fs::path private_key_path = fs::path(__FILE__).parent_path() / "../tests/fixtures/es256.pem";
+    fs::path image_path = current_dir / "../tests/fixtures/A.jpg";
+    fs::path signed_image_path = current_dir / "../tests/fixtures/A.jpg";
+    fs::path output_path = current_dir / "../target/example/training.jpg";
+
+    try
+    {
+        auto manifest = read_text_file(manifest_path);
+        auto certs = read_text_file(certs_path);
+        auto private_key = read_text_file(private_key_path);
+
+        // create a sign_info struct
+        C2paSignerInfo sign_info = {.alg = "es256", .sign_cert = certs.c_str(), .private_key = private_key.c_str(), .ta_url = "http://timestamp.digicert.com"};
+        auto signer = c2pa::Signer(&sign_info);
+
+        std::remove(output_path.c_str()); // remove the file if it exists
+
+        auto builder = c2pa::Builder(manifest);
+        builder.add_resource("thumbnail", image_path);
+
+        string ingredient_json = "{\"title\":\"Test Ingredient\"}";
+        builder.add_ingredient(ingredient_json, signed_image_path);
+        auto manifest_data = builder.sign(signed_image_path, output_path, signer);
+        auto reader = c2pa::Reader(output_path);
+        auto json = reader.json();
+        ASSERT_TRUE(std::filesystem::exists(output_path));
+    }
+    catch (c2pa::Exception const &e)
+    {
+        FAIL() << "Failed: C2pa::Builder: " << e.what() << endl;
+    };
+};
+
+TEST(Builder, SignFileCSigner)
+{
+
+    fs::path current_dir = fs::path(__FILE__).parent_path();
+
+    // Construct the paths relative to the current directory
+    fs::path manifest_path = current_dir / "../tests/fixtures/training.json";
+    fs::path certs_path = fs::path(__FILE__).parent_path() / "../tests/fixtures/es256.pub";
+    fs::path private_key_path = fs::path(__FILE__).parent_path() / "../tests/fixtures/es256.pem";
+    fs::path image_path = current_dir / "../tests/fixtures/A.jpg";
+    fs::path signed_image_path = current_dir / "../tests/fixtures/A.jpg";
+    fs::path output_path = current_dir / "../target/example/training.jpg";
+
+    try
+    {
+        auto manifest = read_text_file(manifest_path);
+        auto certs = read_text_file(certs_path);
+
         c2pa::Signer signer = c2pa::Signer(&test_signer, Es256, certs, "http://timestamp.digicert.com");
 
         std::remove(output_path.c_str()); // remove the file if it exists
@@ -68,6 +154,7 @@ TEST(Builder, SignFile)
     };
 };
 
+
 TEST(Builder, SignStream)
 {
     try
@@ -76,14 +163,14 @@ TEST(Builder, SignStream)
 
         // Construct the paths relative to the current directory
         fs::path manifest_path = current_dir / "../tests/fixtures/training.json";
-        fs::path certs_path = current_dir / "../tests/fixtures/es256_certs.pem";
+        fs::path certs_path = current_dir / "../tests/fixtures/ed25519.pub";
         fs::path signed_image_path = current_dir / "../tests/fixtures/A.jpg";
 
         auto manifest = read_text_file(manifest_path);
         auto certs = read_text_file(certs_path);
 
         // create a signer
-        c2pa::Signer signer = c2pa::Signer(&test_signer, Es256, certs, "http://timestamp.digicert.com");
+        c2pa::Signer signer = c2pa::Signer(ed25519_signer, Ed25519, certs, "http://timestamp.digicert.com");
 
         auto builder = c2pa::Builder(manifest);
 
@@ -120,14 +207,14 @@ TEST(Builder, SignStreamCloudUrl)
 
         // Construct the paths relative to the current directory
         fs::path manifest_path = current_dir / "../tests/fixtures/training.json";
-        fs::path certs_path = current_dir / "../tests/fixtures/es256_certs.pem";
+        fs::path certs_path = current_dir / "../tests/fixtures/ed25519.pub";
         fs::path signed_image_path = current_dir / "../tests/fixtures/A.jpg";
 
         auto manifest = read_text_file(manifest_path);
         auto certs = read_text_file(certs_path);
 
         // create a signer
-        c2pa::Signer signer = c2pa::Signer(&test_signer, Es256, certs, "http://timestamp.digicert.com");
+        c2pa::Signer signer = c2pa::Signer(&ed25519_signer, Ed25519, certs, "http://timestamp.digicert.com");
 
         auto builder = c2pa::Builder(manifest);
 
@@ -175,14 +262,14 @@ TEST(Builder, SignDataHashedEmbedded)
 
         // Construct the paths relative to the current directory
         fs::path manifest_path = current_dir / "../tests/fixtures/training.json";
-        fs::path certs_path = current_dir / "../tests/fixtures/es256_certs.pem";
+        fs::path certs_path = current_dir / "../tests/fixtures/ed25519.pub";
         // fs::path signed_image_path = current_dir / "../tests/fixtures/A.jpg";
 
         auto manifest = read_text_file(manifest_path);
         auto certs = read_text_file(certs_path);
 
         // create a signer
-        c2pa::Signer signer = c2pa::Signer(&test_signer, Es256, certs, "http://timestamp.digicert.com");
+        c2pa::Signer signer = c2pa::Signer(ed25519_signer, Ed25519, certs, "http://timestamp.digicert.com");
 
         auto builder = c2pa::Builder(manifest);
 

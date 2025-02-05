@@ -79,7 +79,7 @@ int main()
     try
     {
         char *manifest = load_file("tests/fixtures/training.json");
-        char *certs = load_file("tests/fixtures/es256_certs.pem");
+        char *certs = load_file("tests/fixtures/es256.pub");
 
         // create a signer
         c2pa::Signer signer = c2pa::Signer(&cmd_signer, Es256, certs, "http://timestamp.digicert.com");
@@ -104,7 +104,7 @@ int main()
     try
     {
         char *manifest = load_file("tests/fixtures/training.json");
-        char *certs = load_file("tests/fixtures/es256_certs.pem");
+        char *certs = load_file("tests/fixtures/es256.pub");
 
         // create a signer
         c2pa::Signer signer = c2pa::Signer(&cmd_signer, Es256, certs, "http://timestamp.digicert.com");

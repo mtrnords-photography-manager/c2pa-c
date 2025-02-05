@@ -6,7 +6,7 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-std::vector<unsigned char> es25519_signer(const std::vector<unsigned char> &data, const std::string &private_key_path)
+std::vector<unsigned char> es256_signer(const std::vector<unsigned char> &data, const std::string &private_key_path)
 {
     if (data.empty())
     {
@@ -79,6 +79,6 @@ std::vector<unsigned char> es25519_signer(const std::vector<unsigned char> &data
 
 vector<unsigned char> test_signer(const std::vector<unsigned char> &data)
 {
-    fs::path private_key_path = fs::path(__FILE__).parent_path() / "fixtures/es256_private.key";
-    return es25519_signer(data, private_key_path.c_str());
+    fs::path private_key_path = fs::path(__FILE__).parent_path() / "fixtures/es256.pem";
+    return es256_signer(data, private_key_path.c_str());
 };

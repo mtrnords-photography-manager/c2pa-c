@@ -561,6 +561,11 @@ namespace c2pa
         signer = c2pa_signer_create((const void *)callback, &signer_passthrough, alg, sign_cert.c_str(), tsa_uri.c_str());
     }
 
+    Signer::Signer(SignerInfo *signer_info)
+    {
+        signer = c2pa_signer_from_info(signer_info);
+    }
+
     Signer::~Signer()
     {
         c2pa_signer_free(signer);
@@ -781,11 +786,25 @@ namespace c2pa
         auto result = c2pa_builder_sign_data_hashed_embeddable(builder, signer.c2pa_signer(), data_hash.c_str(), format.c_str(), &c2pa_manifest_bytes);
         if (result < 0 || c2pa_manifest_bytes == NULL)
         {
-          throw(c2pa::Exception("Failed to create data hashed placeholder"));
+            throw(c2pa::Exception("Failed to create data hashed placeholder"));
         }
 
         auto data = std::vector<unsigned char>(c2pa_manifest_bytes, c2pa_manifest_bytes + result);
         c2pa_manifest_bytes_free(c2pa_manifest_bytes);
         return data;
+    }
+ 
+    vector<unsigned char> ed25519_sign(const std::vector<unsigned char> &data, const char* private_key)
+    {
+        const unsigned char *signature_bytes = NULL;
+        auto result = c2pa_ed25519_sign(data.data(), data.size(), private_key, &signature_bytes);
+        if (result < 0 || signature_bytes == NULL)
+        {
+            throw(c2pa::Exception("Failed to sign ed25519"));
+        }
+
+        auto signature = std::vector<unsigned char>(signature_bytes, signature_bytes + result);
+        c2pa_signature_free(signature_bytes);
+        return signature;
     }
 } // namespace c2pa

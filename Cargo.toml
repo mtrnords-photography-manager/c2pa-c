@@ -8,7 +8,8 @@ authors = ["Gavin Peacock <gpeacock@adobe.com"]
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
-c2pa = { version = "0.45.0", features = [
+#c2pa = { version = "0.45.1", features = [
+c2pa = { git="https://github.com/contentauth/c2pa-rs", branch="p1363_fix", features = [
     "file_io",
     "add_thumbnails",
     "fetch_remote_manifests",

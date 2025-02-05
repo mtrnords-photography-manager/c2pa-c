@@ -178,6 +178,8 @@ namespace c2pa
 
         Signer(C2paSigner *signer) : signer(signer) {}
 
+        Signer(SignerInfo *signer_info);
+
         ~Signer();
 
         /// @brief  Get the size to reserve for a signature for this signer.
@@ -292,6 +294,16 @@ namespace c2pa
         // Private constructor for Builder from an archive (todo: find a better way to handle this)
         Builder(istream &archive);
     };
+
+    /// @brief A prebuilt signer for Ed25519.
+    /// @note This must be wrapped in a function that loads the private key.
+    /// @note It cannot be passed directly to the Signer constructor.
+    /// @param data  The data to sign.
+    /// @param private_key  The private key to use for signing.
+    /// @return A vector containing the signed data.
+    /// @throws C2pa::Exception for errors encountered by the C2PA library. 
+    vector<unsigned char> ed25519_sign(const std::vector<unsigned char> &data, const char* private_key);
+
 }
 
 // Restore warnings

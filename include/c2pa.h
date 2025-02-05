@@ -588,6 +588,26 @@ struct C2paSigner *c2pa_signer_create(const void *context,
                                       const char *tsa_url);
 
 /**
+ * Creates a C2paSigner from a SignerInfo configuration.
+ * This allows using all the Rust Signer implementations.
+ * But it requires the private key to be available in memory.
+ *
+ * # Parameters
+ * * signer_info: pointer to a C2paSignerInfo.
+ *
+ * # Errors
+ * Returns NULL if there were errors, otherwise returns a pointer to a C2paSigner.
+ * The error string can be retrieved by calling c2pa_error.
+ *
+ * # Safety
+ * Reads from NULL-terminated C strings
+ * The returned value MUST be released by calling c2pa_signer_free
+ * and it is no longer valid after that call.
+ *
+ */
+IMPORT extern struct C2paSigner *c2pa_signer_from_info(const struct C2paSignerInfo *signer_info);
+
+/**
  * Returns the size to reserve for the signature for this signer.
  *
  * # Parameters
@@ -613,14 +633,15 @@ IMPORT extern void c2pa_signer_free(const struct C2paSigner *signer_ptr);
 /**
  * Signs a byte array using the Ed25519 algorithm.
  * # Safety
- * The returned value MUST be freed by calling c2pa_signature_free
+ * The signature_ptr value MUST be freed by calling c2pa_signature_free
  * and it is no longer valid after that call.
  *
  */
 IMPORT extern
-const unsigned char *c2pa_ed25519_sign(const unsigned char *bytes,
-                                       uintptr_t len,
-                                       const char *private_key);
+int c2pa_ed25519_sign(const unsigned char *bytes,
+                      uintptr_t len,
+                      const char *private_key,
+                      const unsigned char **signature_ptr);
 
 /**
  * Frees a signature allocated by Rust.

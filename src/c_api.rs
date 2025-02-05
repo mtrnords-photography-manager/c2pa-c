@@ -921,6 +921,41 @@ pub unsafe extern "C" fn c2pa_signer_create(
     }))
 }
 
+/// Creates a C2paSigner from a SignerInfo configuration.
+/// This allows using all the Rust Signer implementations.
+/// But it requires the private key to be available in memory.
+///
+/// # Parameters
+/// * signer_info: pointer to a C2paSignerInfo.
+///
+/// # Errors
+/// Returns NULL if there were errors, otherwise returns a pointer to a C2paSigner.
+/// The error string can be retrieved by calling c2pa_error.
+///
+/// # Safety
+/// Reads from NULL-terminated C strings
+/// The returned value MUST be released by calling c2pa_signer_free
+/// and it is no longer valid after that call.
+///
+#[no_mangle]
+pub unsafe extern "C" fn c2pa_signer_from_info(signer_info: &C2paSignerInfo) -> *mut C2paSigner {
+    let signer_info = SignerInfo {
+        alg: from_cstr_null_check!(signer_info.alg),
+        sign_cert: from_cstr_null_check!(signer_info.sign_cert).into_bytes(),
+        private_key: from_cstr_null_check!(signer_info.private_key).into_bytes(),
+        ta_url: from_cstr_option!(signer_info.ta_url),
+    };
+    match signer_info.signer() {
+        Ok(signer) => Box::into_raw(Box::new(C2paSigner {
+            signer: Box::new(signer),
+        })),
+        Err(err) => {
+            err.set_last();
+            std::ptr::null_mut()
+        }
+    }
+}
+
 /// Returns the size to reserve for the signature for this signer.
 ///
 /// # Parameters
@@ -958,26 +993,31 @@ pub unsafe extern "C" fn c2pa_signer_free(signer_ptr: *const C2paSigner) {
 #[no_mangle]
 /// Signs a byte array using the Ed25519 algorithm.
 /// # Safety
-/// The returned value MUST be freed by calling c2pa_signature_free
+/// The signature_ptr value MUST be freed by calling c2pa_signature_free
 /// and it is no longer valid after that call.
 ///
 pub unsafe extern "C" fn c2pa_ed25519_sign(
     bytes: *const c_uchar,
     len: usize,
     private_key: *const c_char,
-) -> *const c_uchar {
+    signature_ptr: *mut *const c_uchar,
+) -> c_int {
+    null_check_int!(bytes);
+    null_check_int!(signature_ptr);
     let bytes = std::slice::from_raw_parts(bytes, len);
-    let private_key = from_cstr_null_check!(private_key);
+    let private_key = from_cstr_null_check_int!(private_key);
 
     let result = CallbackSigner::ed25519_sign(bytes, private_key.as_bytes());
     match result {
-        Ok(signed_bytes) => {
-            let signed_bytes = signed_bytes.into_boxed_slice();
-            let ptr = signed_bytes.as_ptr();
-            std::mem::forget(signed_bytes);
-            ptr
+        Ok(signature_bytes) => {
+            let len = signature_bytes.len() as c_int;
+            *signature_ptr = Box::into_raw(signature_bytes.into_boxed_slice()) as *const c_uchar;
+            len
         }
-        Err(_) => std::ptr::null(),
+        Err(err) => {
+            Error::from_c2pa_error(err).set_last();
+            -1
+        }
     }
 }
 

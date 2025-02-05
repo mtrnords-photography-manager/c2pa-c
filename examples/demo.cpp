@@ -57,7 +57,7 @@ int main()
 
     // Construct the paths relative to the current directory
     fs::path manifest_path = current_dir / "../tests/fixtures/training.json";
-    fs::path certs_path = current_dir / "../tests/fixtures/es256_certs.pem";
+    fs::path certs_path = current_dir / "../tests/fixtures/es256.pub";
     fs::path image_path = current_dir / "../tests/fixtures/A.jpg";
     fs::path output_path = current_dir / "../target/example/training.jpg";
     fs::path thumbnail_path = current_dir / "../target/example/thumbnail.jpg";

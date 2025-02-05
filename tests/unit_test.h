@@ -194,7 +194,7 @@ intptr_t signer_callback(const void* context, const unsigned char *data, uintptr
         printf("signer callback unexpected context %s\n", (const char *) context);
     }    
     // sign the temp file by calling openssl in a shell
-    system("openssl dgst -sign tests/fixtures/es256_private.key -sha256 -out target/c_signature.sig target/c_data.bin");
+    system("openssl dgst -sign tests/fixtures/es256.pem -sha256 -out target/c_signature.sig target/c_data.bin");
 
     // read the signature file
     FILE* result_file = fopen("target/c_signature.sig", "rb");

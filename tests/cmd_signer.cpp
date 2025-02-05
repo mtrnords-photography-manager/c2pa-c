@@ -30,7 +30,7 @@ std::vector<unsigned char> cmd_signer(const std::vector<unsigned char> &data)
     source.write(reinterpret_cast<const char *>(data.data()), data.size());
 
     // sign the temp file by calling openssl in a shell
-    system("openssl dgst -sign tests/fixtures/es256_private.key -sha256 -out target/c_signature.sig target/c_data.bin");
+    system("openssl dgst -sign tests/fixtures/es256.pem -sha256 -out target/c_signature.sig target/c_data.bin");
 
     std::vector<uint8_t> signature;
 

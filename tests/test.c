@@ -62,8 +62,8 @@ int main(void)
 
     c2pa_reader_free(reader);
  
-    char *certs = load_file("tests/fixtures/es256_certs.pem");
-    char *private_key = load_file("tests/fixtures/es256_private.key");
+    char *certs = load_file("tests/fixtures/es256.pub");
+    char *private_key = load_file("tests/fixtures/es256.pem");
 
     char *manifest = load_file("tests/fixtures/training.json");
 
@@ -76,7 +76,7 @@ int main(void)
     result = c2pa_sign_file("tests/fixtures/foo.jpg", "target/tmp/earth.jpg", manifest, &sign_info, "tests/fixtures");
     assert_null("c2pa_sign_file_not_found", result, "FileNotFound");
 
-    result = c2pa_sign_file("tests/fixtures/es256_certs.pem", "target/tmp/earth.jpg", manifest, &sign_info, "tests/fixtures");
+    result = c2pa_sign_file("tests/fixtures/es256.pub", "target/tmp/earth.jpg", manifest, &sign_info, "tests/fixtures");
     assert_null("c2pa_sign_file_not_supported", result, "NotSupported");
 
     C2paBuilder *builder = c2pa_builder_from_json(manifest);
