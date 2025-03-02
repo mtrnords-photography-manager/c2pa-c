@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Gavin Peacock <gpeacock@adobe.com"]
 
 [lib]
-crate-type = ["lib", "staticlib", "cdylib"]
+crate-type = ["lib", "cdylib"]
 
 [dependencies]
 c2pa = { version = "0.46.0", features = [
@@ -21,6 +21,6 @@ thiserror = "1.0.64"
 [profile.release]
 strip = true # Strip symbols from the output binary.
 lto = true   # Enable link-time optimization.
-#opt-level = "z"     # Optimize for size.
-#codegen-units = 1   # Reduce number of codegen units to increase optimizations.
+opt-level = "z"     # Optimize for size.
+codegen-units = 1   # Reduce number of codegen units to increase optimizations.
 #panic = "abort"     # Abort on panic
