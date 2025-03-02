@@ -5,6 +5,11 @@ project(c2pa_cpp)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# LTO
+include(CheckIPOSupported)
+check_ipo_supported(RESULT supported OUTPUT error)
+
+
 # Include directories
 set(INCLUDES ${C2PA_C_ROOT_DIR}/include)
 include_directories(${INCLUDES})
@@ -60,6 +65,65 @@ if (SANITIZERS_ENABLED)
             -fsanitize=undefined
             -fsanitize=leak
     )
+endif ()
+
+
+# Default list of compile options applying to all compilers
+set(COMPILE_OPTIONS
+        -Wshadow
+        -Wconversion
+        -Wpedantic
+        -Wuninitialized
+        -Wall
+        -Wextra
+        -Werror
+)
+
+# If clang we have to ignore the unknown-warning-option check since it gets confused with gcc and werror
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    list(APPEND COMPILE_OPTIONS
+            -Wno-error=unknown-warning-option)
+endif ()
+
+# Set warning levels and other compiler options
+target_compile_options(c2pa_cpp PRIVATE
+        ${COMPILE_OPTIONS}
+)
+
+# if gcc we add -fhardened
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(c2pa_cpp PRIVATE
+            -fhardened
+            -Wno-error=hardened
+    )
+else ()
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+        target_compile_options(c2pa_cpp PRIVATE
+                -D_FORTIFY_SOURCE=3
+        )
+    endif ()
+
+    target_compile_options(c2pa_cpp PRIVATE
+            -D_GLIBCXX_ASSERTIONS
+            -ftrivial-auto-var-init=zero
+            -fPIE
+            -fstack-protector-strong
+            -fstack-clash-protection
+    )
+    # if x86 gnu/linux we add -fcf-protection=full
+    if (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        target_compile_options(c2pa_cpp PRIVATE
+                -fcf-protection=full
+        )
+    endif ()
+endif ()
+
+# LTO
+if (supported)
+    message(STATUS "IPO / LTO enabled")
+    set_property(TARGET c2pa_cpp PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+else ()
+    message(STATUS "IPO / LTO not supported: <${error}>")
 endif ()
 
 # Define the installation rules

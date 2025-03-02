@@ -247,7 +247,7 @@ using SignerFunc =
 /// certificate, and TSA URI.
 class C2PA_EXPORT Signer {
 private:
-  C2paSigner *signer{};
+  C2paSigner *signer_{};
 
 public:
   /// @brief Create a Signer from a callback function, signing algorithm,
@@ -259,7 +259,7 @@ public:
   Signer(SignerFunc *callback, C2paSigningAlg alg, const string &sign_cert,
          const std::optional<std::string> &tsa_uri);
 
-  explicit Signer(C2paSigner *signer) : signer(signer) {}
+  explicit Signer(C2paSigner *signer) : signer_(signer) {}
 
   Signer(const Signer &) = default;
   Signer(Signer &&) = default;
@@ -278,7 +278,7 @@ public:
 /// @brief Builder class for creating a manifest.
 /// @details This class is used to create a manifest from a json string and add
 /// resources and ingredients to the manifest.
-class C2PA_EXPORT Builder {
+class C2PA_EXPORT Builder final {
 private:
   C2paBuilder *builder;
 

@@ -37,6 +37,33 @@ using path = std::filesystem::path;
 using namespace std;
 using namespace c2pa;
 
+namespace {
+intptr_t signer_passthrough(const void *context, const unsigned char *data,
+                            const uintptr_t len, unsigned char *signature,
+                            const uintptr_t sig_max_len) {
+  try {
+    // the context is a pointer to the C++ callback function
+    auto *callback =
+        reinterpret_cast<SignerFunc *>(const_cast<void *>(context));
+    const std::vector<uint8_t> data_vec(data, data + len);
+    std::vector<uint8_t> signature_vec = (callback)(data_vec);
+    if (signature_vec.size() > sig_max_len) {
+      return -1;
+    }
+    std::copy(signature_vec.begin(), signature_vec.end(), signature);
+    return static_cast<intptr_t>(signature_vec.size());
+  } catch (std::exception const &e) {
+    // todo pass exceptions to Rust error handling
+    (void)e;
+    // printf("Error: signer_passthrough - %s\n", e.what());
+    return -1;
+  } catch (...) {
+    // printf("Error: signer_passthrough - unknown exception\n");
+    return -1;
+  }
+}
+} // namespace
+
 namespace c2pa {
 /// Exception class for C2PA errors.
 /// This class is used to throw exceptions for errors encountered by the C2PA
@@ -245,8 +272,8 @@ CppOStream::CppOStream(OStream &ostream)
 
 CppOStream::~CppOStream() { c2pa_release_stream(c_stream); }
 
-intptr_t CppOStream::reader(StreamContext *context, uint8_t *buffer,
-                            intptr_t size) {
+intptr_t CppOStream::reader(StreamContext * /*context*/, uint8_t * /*buffer*/,
+                            intptr_t /*size*/) {
   errno = EINVAL; // Invalid argument
   return -1;
 }
@@ -478,56 +505,31 @@ int Reader::get_resource(const string &uri,
 }
 
 int Reader::get_resource(const string &uri, std::ostream &stream) const {
-  const CppOStream cpp_stream(stream);
+  const CppOStream cpp_stream_(stream);
   const int result = c2pa_reader_resource_to_stream(c2pa_reader, uri.c_str(),
-                                                    cpp_stream.c_stream);
+                                                    cpp_stream_.c_stream);
   if (result < 0) {
     throw Exception();
   }
   return result;
 }
 
-intptr_t signer_passthrough(const void *context, const unsigned char *data,
-                            const uintptr_t len, unsigned char *signature,
-                            const uintptr_t sig_max_len) {
-  try {
-    // the context is a pointer to the C++ callback function
-    auto *callback =
-        reinterpret_cast<SignerFunc *>(const_cast<void *>(context));
-    const std::vector<uint8_t> data_vec(data, data + len);
-    std::vector<uint8_t> signature_vec = (callback)(data_vec);
-    if (signature_vec.size() > sig_max_len) {
-      return -1;
-    }
-    std::copy(signature_vec.begin(), signature_vec.end(), signature);
-    return static_cast<intptr_t>(signature_vec.size());
-  } catch (std::exception const &e) {
-    // todo pass exceptions to Rust error handling
-    (void)e;
-    // printf("Error: signer_passthrough - %s\n", e.what());
-    return -1;
-  } catch (...) {
-    // printf("Error: signer_passthrough - unknown exception\n");
-    return -1;
-  }
-}
-
 Signer::Signer(SignerFunc *callback, const C2paSigningAlg alg,
                const string &sign_cert,
                const std::optional<std::string> &tsa_uri)
-    : signer(c2pa_signer_create(reinterpret_cast<const void *>(callback),
-                                &signer_passthrough, alg, sign_cert.c_str(),
-                                tsa_uri.has_value() ? tsa_uri.value().c_str()
-                                                    : nullptr)) {}
+    : signer_(c2pa_signer_create(reinterpret_cast<const void *>(callback),
+                                 &signer_passthrough, alg, sign_cert.c_str(),
+                                 tsa_uri.has_value() ? tsa_uri.value().c_str()
+                                                     : nullptr)) {}
 
-Signer::~Signer() { c2pa_signer_free(signer); }
+Signer::~Signer() { c2pa_signer_free(signer_); }
 
 /// @brief  Get the C2paSigner
-C2paSigner *Signer::c2pa_signer() const { return signer; }
+C2paSigner *Signer::c2pa_signer() const { return signer_; }
 
 /// @brief  Get the size to reserve for a signature for this signer.
 uintptr_t Signer::reserve_size() const {
-  return c2pa_signer_reserve_size(signer);
+  return c2pa_signer_reserve_size(signer_);
 }
 
 /// @brief  Builder class for creating a manifest implementation.
