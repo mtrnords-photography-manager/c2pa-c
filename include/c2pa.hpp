@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <filesystem>
 
 #include "c2pa.h"
 
@@ -67,9 +68,9 @@ namespace c2pa
     public:
         Exception();
 
-        Exception(string what);
+        explicit Exception(string what);
 
-        virtual const char *what() const throw();
+        [[nodiscard]] const char *what() const noexcept override;
     };
 
     /// Returns the version of the C2pa library.
@@ -157,7 +158,7 @@ namespace c2pa
     public:
         CStream *c_stream;
         template <typename IOStream>
-        CppIOStream(IOStream &iostream);
+        explicit CppIOStream(IOStream &iostream);
         ~CppIOStream();
 
     private:
@@ -186,7 +187,7 @@ namespace c2pa
         /// @brief Create a Reader from a file path.
         /// @param source_path  the path to the file to read.
         /// @throws C2pa::Exception for errors encountered by the C2PA library.
-        Reader(const std::filesystem::path &source_path);
+        explicit Reader(const std::filesystem::path &source_path);
         ~Reader();
 
         /// @brief Get the manifest as a json string.
@@ -230,7 +231,7 @@ namespace c2pa
         /// @param tsa_uri  The TSA URI to use for time-stamping.
         Signer(SignerFunc *callback, C2paSigningAlg alg, const string &sign_cert, const string &tsa_uri);
 
-        Signer(C2paSigner *signer) : signer(signer) {}
+        explicit Signer(C2paSigner *signer) : signer(signer) {}
 
         ~Signer();
 
@@ -253,7 +254,7 @@ namespace c2pa
         /// @brief  Create a Builder from a manifest JSON string.
         /// @param manifest_json  The manifest JSON string.
         /// @throws C2pa::Exception for errors encountered by the C2PA library.
-        Builder(const std::string &manifest_json);
+        explicit Builder(const std::string &manifest_json);
 
         ~Builder();
 
@@ -351,7 +352,7 @@ namespace c2pa
 
     private:
         // Private constructor for Builder from an archive (todo: find a better way to handle this)
-        Builder(istream &archive);
+        explicit Builder(istream &archive);
     };
 }
 

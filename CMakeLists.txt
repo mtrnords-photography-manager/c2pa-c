@@ -20,12 +20,20 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3")
 
-
 INCLUDE_DIRECTORIES(include)
 
+# Test if we are within FetchContent and set the CMAKE_SOURCE_DIR as a custom variable for the subdirectories to use
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(C2PA_C_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+    set(C2PA_C_IS_FETCH_CONTENT FALSE)
+
+    # Add tests and examples
+    ADD_SUBDIRECTORY(tests)
+    ADD_SUBDIRECTORY(examples)
+else()
+    set(C2PA_C_ROOT_DIR ${CMAKE_SOURCE_DIR})
+    set(C2PA_C_IS_FETCH_CONTENT TRUE)
+endif()
+
+
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(tests)
-ADD_SUBDIRECTORY(examples)
-
-
-

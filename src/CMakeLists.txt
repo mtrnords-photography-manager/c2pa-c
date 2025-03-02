@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Include directories
-set(INCLUDES ${CMAKE_SOURCE_DIR}/include)
+set(INCLUDES ${C2PA_C_ROOT_DIR}/include)
 include_directories(${INCLUDES})
 
 # Source files
@@ -15,8 +15,23 @@ set(SOURCES c2pa.cpp)
 # Create the static library
 add_library(c2pa_cpp STATIC ${SOURCES})
 
+# Check if the rust library is available and if not we will build it after checking if cargo is available
+if (NOT EXISTS ${C2PA_C_ROOT_DIR}/target/release/libc2pa_c.dylib)
+    find_program(CARGO cargo)
+    if (CARGO)
+        execute_process(COMMAND cargo build --release WORKING_DIRECTORY ${C2PA_C_ROOT_DIR})
+
+        # On linux it is named .so hence we need to rename it to .dylib if we are on linux
+        if (UNIX AND NOT APPLE)
+            execute_process(COMMAND mv ${C2PA_C_ROOT_DIR}/target/release/libc2pa_c.so ${C2PA_C_ROOT_DIR}/target/release/libc2pa_c.dylib)
+        endif()
+    else()
+        message(FATAL_ERROR "Cargo is required to build the Rust library")
+    endif()
+endif()
+
 # Add the Rust library
-set(RUST_LIB ${CMAKE_SOURCE_DIR}/target/release/libc2pa_c.dylib)
+set(RUST_LIB ${C2PA_C_ROOT_DIR}/target/release/libc2pa_c.dylib)
 
 target_link_libraries(c2pa_cpp ${RUST_LIB})
 

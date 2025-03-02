@@ -3,6 +3,8 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include <filesystem>
+
 using namespace std;
 namespace fs = std::filesystem;
 

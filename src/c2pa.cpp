@@ -18,9 +18,9 @@
 
 #include <fstream>
 #include <iostream>
-#include <string.h>
 #include <optional>   // C++17
 #include <filesystem> // C++17
+#include <cstring>
 
 #include "c2pa.hpp"
 
