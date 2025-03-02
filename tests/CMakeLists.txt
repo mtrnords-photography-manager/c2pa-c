@@ -26,12 +26,21 @@ add_library(test_signer test_signer.cpp)
 target_include_directories(test_signer PUBLIC ${OPENSSL_INCLUDE_DIR})
 
 # Add the Rust library
-set(RUST_LIB ${CMAKE_SOURCE_DIR}/target/release/libc2pa_c.dylib)
+# If macos, use .dylib, otherwise use .so unless Windows, then use .dll
+if (APPLE)
+    set(RUST_LIB ${C2PA_C_ROOT_DIR}/target/release/libc2pa_c.dylib)
+else ()
+    if (WIN32)
+        set(RUST_C_LIB "${C2PA_C_ROOT_DIR}/target/release/c2pa_c.dll")
+    else ()
+        set(RUST_C_LIB "${C2PA_C_ROOT_DIR}/target/release/libc2pa_c.so")
+    endif ()
+endif ()
 
 # Create the unit test target.
-file(GLOB unit_test_files CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/tests/*.test.cpp" "${CMAKE_SOURCE_DIR}/tests/test_signer.cpp")
+file(GLOB unit_test_files CONFIGURE_DEPENDS "${C2PA_C_ROOT_DIR}/tests/*.test.cpp" "${C2PA_C_ROOT_DIR}/tests/test_signer.cpp")
 add_executable(unit_tests ${unit_test_files})
-target_include_directories(unit_tests PUBLIC "${CMAKE_SOURCE_DIR}/include/")
+target_include_directories(unit_tests PUBLIC "${C2PA_C_ROOT_DIR}/include/")
 
 target_link_libraries(unit_tests OpenSSL::SSL OpenSSL::Crypto)
 target_link_libraries(unit_tests nlohmann_json::nlohmann_json)

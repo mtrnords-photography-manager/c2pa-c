@@ -18,24 +18,24 @@ trailer = "\n"
 
 include_guard = "c2pa_bindings_h"
 
-after_includes = """
+#after_includes = """
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(C2PA_DYNAMIC_LOADING)
-    #if defined(_STATIC_C2PA) 
-        #define IMPORT  __declspec(dllexport)
-    #else 
-        #if __GNUC__
-            #define IMPORT __attribute__ ((dllimport))
-        #else
-            #define IMPORT __declspec(dllimport)
-        #endif
-    #endif
+#if defined(_STATIC_C2PA)
+#define IMPORT  __declspec(dllexport)
 #else
-    #define IMPORT
+#if __GNUC__
+#define IMPORT __attribute__ ((dllimport))
+#else
+#define IMPORT __declspec(dllimport)
+#endif
+#endif
+#else
+#define IMPORT
 
 #endif
 
-"""
+#"""
 
 [export]
 include = ["C2paReader", "C2paBuilder"]
@@ -43,6 +43,6 @@ include = ["C2paReader", "C2paBuilder"]
 [export.rename]
 "C2paConfigC" = "C2paConfig"
 
-[fn]
-prefix = "IMPORT extern"
+#[fn]
+#prefix = "IMPORT extern"
 

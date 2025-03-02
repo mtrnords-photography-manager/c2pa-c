@@ -25,4 +25,32 @@ target_link_libraries(training c2pa_cpp test_signer)
 add_executable(demo demo.cpp)
 target_link_libraries(demo nlohmann_json::nlohmann_json)
 target_link_libraries(demo OpenSSL::SSL OpenSSL::Crypto)
-target_link_libraries(demo c2pa_cpp test_signer) 
+target_link_libraries(demo c2pa_cpp test_signer)
+
+# if debug building
+if (SANITIZERS_ENABLED)
+    target_compile_options(demo PRIVATE
+            -fsanitize=address
+            -fsanitize=undefined
+            -fsanitize=leak
+    )
+    target_link_options(
+            demo PRIVATE
+            -fsanitize=address
+            -fsanitize=undefined
+            -fsanitize=leak
+    )
+
+
+    target_compile_options(training PRIVATE
+            -fsanitize=address
+            -fsanitize=undefined
+            -fsanitize=leak
+    )
+    target_link_options(
+            training PRIVATE
+            -fsanitize=address
+            -fsanitize=undefined
+            -fsanitize=leak
+    )
+endif ()

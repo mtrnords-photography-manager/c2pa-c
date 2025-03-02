@@ -209,6 +209,7 @@ impl TestCStream {
         }
     }
 
+    #[no_mangle]
     unsafe extern "C" fn reader(context: *mut StreamContext, data: *mut u8, len: isize) -> isize {
         let stream: &mut TestCStream = &mut *(context as *mut TestCStream);
         let data: &mut [u8] = slice::from_raw_parts_mut(data, len as usize);
@@ -221,6 +222,7 @@ impl TestCStream {
         }
     }
 
+    #[no_mangle]
     unsafe extern "C" fn seeker(
         context: *mut StreamContext,
         offset: isize,
@@ -251,10 +253,12 @@ impl TestCStream {
         stream.cursor.position() as isize
     }
 
+    #[no_mangle]
     unsafe extern "C" fn flusher(_context: *mut StreamContext) -> isize {
         0
     }
 
+    #[no_mangle]
     unsafe extern "C" fn writer(context: *mut StreamContext, data: *const u8, len: isize) -> isize {
         let stream: &mut TestCStream = &mut *(context as *mut TestCStream);
         let data: &[u8] = slice::from_raw_parts(data, len as usize);
