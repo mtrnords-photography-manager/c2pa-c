@@ -17,8 +17,8 @@
 using nlohmann::json;
 
 TEST(ReadFile, ReadFileWithNoManifestReturnsEmptyOptional) {
-  auto result = c2pa::read_file("../../tests/fixtures/A.jpg");
-  ASSERT_TRUE(result->empty());
+  const auto result = c2pa::read_file("../../tests/fixtures/A.jpg");
+  ASSERT_FALSE(result.has_value());
 };
 
 TEST(ReadFile, ReadFileWithManifestReturnsSomeValue) {

@@ -35,7 +35,7 @@ namespace c2pa {
 /// This class is used to throw exceptions for errors encountered by the C2PA
 /// library via c2pa_error().
 
-Exception::Exception() : message(c2pa_error()) {
+Exception::Exception() {
   auto *const result = c2pa_error();
   message = string(result);
   c2pa_release_string(result);
@@ -83,8 +83,12 @@ optional<string> read_file(const filesystem::path &source_path,
       c2pa_read_file(path_to_string(source_path).c_str(), dir.c_str());
 
   if (result == nullptr) {
+    // Check if "ManifestNotFound" is contained (possibly as a substring) in the
+    // error message
     if (const auto exception = c2pa::Exception();
-        strstr(exception.what(), "ManifestNotFound") != nullptr) {
+        std::string(exception.what()).find("ManifestNotFound") !=
+        std::string::npos) {
+      std::cout << "Error reading file: " << exception.what() << '\n';
       return std::nullopt;
     }
     throw c2pa::Exception();
