@@ -35,5 +35,7 @@ else()
     set(C2PA_C_IS_FETCH_CONTENT TRUE)
 endif()
 
+message("C2PA_C_ROOT_DIR: ${C2PA_C_ROOT_DIR}")
+message("C2PA_C_IS_FETCH_CONTENT: ${C2PA_C_IS_FETCH_CONTENT}")
 
 ADD_SUBDIRECTORY(src)
