@@ -13,6 +13,7 @@
 #include <fstream>
 #include <stdlib.h>
 #include <vector>
+#include <cstdint>
 
 /// @brief Implementation of the command line signer function
 std::vector<unsigned char> cmd_signer(const std::vector<unsigned char> &data)

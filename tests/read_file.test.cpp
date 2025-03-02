@@ -26,7 +26,7 @@ TEST(ReadFile, ReadFileWithManifestReturnsSomeValue) {
   ASSERT_TRUE(result.has_value());
 
   // parse result with json
-  auto json = json::parse(result.value());
+  const auto json = json::parse(result.value());
   EXPECT_TRUE(json.contains("manifests"));
   EXPECT_TRUE(json.contains("active_manifest"));
 };

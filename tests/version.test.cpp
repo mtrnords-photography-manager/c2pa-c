@@ -14,6 +14,6 @@
 #include <gtest/gtest.h>
 
 TEST(Version, VersionReturnsInCorrectFormat) {
-  auto version = c2pa::version();
+  const auto version = c2pa::version();
   ASSERT_TRUE(version.find("c2pa-c/0.") != std::string::npos);
 }

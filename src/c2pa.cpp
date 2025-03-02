@@ -16,11 +16,18 @@
 ///          This is an early version, and has not been fully tested.
 ///          Thread safety is not guaranteed due to the use of errno and etc.
 
+#include <cstdint>
 #include <cstring>
+#include <exception>
 #include <filesystem> // C++17
 #include <fstream>
+#include <ios>
+#include <istream>
 #include <optional> // C++17
+#include <ostream>
+#include <stdexcept>
 #include <utility>
+#include <vector>
 
 #include "c2pa.h"
 #include "c2pa.hpp"
@@ -506,12 +513,12 @@ intptr_t signer_passthrough(const void *context, const unsigned char *data,
 }
 
 Signer::Signer(SignerFunc *callback, const C2paSigningAlg alg,
-               const string &sign_cert, const string &tsa_uri)
+               const string &sign_cert,
+               const std::optional<std::string> &tsa_uri)
     : signer(c2pa_signer_create(reinterpret_cast<const void *>(callback),
                                 &signer_passthrough, alg, sign_cert.c_str(),
-                                tsa_uri.c_str())) {
-  // Pass the C++ callback as a context to our static callback wrapper.
-}
+                                tsa_uri.has_value() ? tsa_uri.value().c_str()
+                                                    : nullptr)) {}
 
 Signer::~Signer() { c2pa_signer_free(signer); }
 
@@ -703,10 +710,9 @@ Builder::data_hashed_placeholder(uintptr_t reserve_size,
   return data;
 }
 
-std::vector<unsigned char>
-Builder::sign_data_hashed_embeddable(const Signer &signer,
-                                     const string &data_hash,
-                                     const string &format, istream *asset) {
+std::vector<unsigned char> Builder::sign_data_hashed_embeddable(
+    const Signer &signer, const string &data_hash, const string &format,
+    istream *asset) const {
   int result = 0;
   const unsigned char *c2pa_manifest_bytes = nullptr;
   if (asset != nullptr) {

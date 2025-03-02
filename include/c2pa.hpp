@@ -20,6 +20,8 @@
 #define C2PA_H
 
 // Suppress unused function warning for GCC/Clang
+#include <cstdint>
+#include <exception>
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -32,7 +34,6 @@
 #endif
 
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -55,12 +56,12 @@ using path = std::filesystem::path;
 namespace c2pa {
 using namespace std;
 
-typedef C2paSignerInfo SignerInfo;
+using SignerInfo = C2paSignerInfo;
 
 /// Exception class for C2pa errors.
 /// This class is used to throw exceptions for errors encountered by the C2pa
 /// library via c2pa_error().
-class C2PA_EXPORT Exception : public exception {
+class C2PA_EXPORT Exception final : public exception {
 private:
   string message;
 
@@ -78,7 +79,7 @@ string C2PA_EXPORT version();
 /// Loads C2PA settings from a string in a given format.
 /// @param format the mime format of the string.
 /// @param data the string to load.
-void C2PA_EXPORT load_settings(const string format, const string data);
+void C2PA_EXPORT load_settings(string format, string data);
 
 /// Reads a file and returns the manifest json as a C2pa::String.
 /// @param source_path the path to the file to read.
@@ -143,6 +144,11 @@ public:
   CStream *c_stream;
   template <typename OStream> explicit CppOStream(OStream &ostream);
 
+  CppOStream(const CppOStream &) = default;
+  CppOStream(CppOStream &&) = default;
+  CppOStream &operator=(const CppOStream &) = default;
+  CppOStream &operator=(CppOStream &&) = default;
+
   ~CppOStream();
 
 private:
@@ -162,6 +168,11 @@ class C2PA_EXPORT CppIOStream : public CStream {
 public:
   CStream *c_stream;
   template <typename IOStream> explicit CppIOStream(IOStream &iostream);
+
+  CppIOStream(const CppIOStream &) = default;
+  CppIOStream(CppIOStream &&) = default;
+  CppIOStream &operator=(const CppIOStream &) = default;
+  CppIOStream &operator=(CppIOStream &&) = default;
   ~CppIOStream();
 
 private:
@@ -180,7 +191,7 @@ private:
 class C2PA_EXPORT Reader {
 private:
   C2paReader *c2pa_reader;
-  CppIStream *cpp_stream = NULL;
+  CppIStream *cpp_stream = nullptr;
 
 public:
   /// @brief Create a Reader from a stream.
@@ -195,19 +206,25 @@ public:
   /// @param source_path  the path to the file to read.
   /// @throws C2pa::Exception for errors encountered by the C2PA library.
   explicit Reader(const std::filesystem::path &source_path);
+
+  Reader(const Reader &) = default;
+  Reader(Reader &&) = default;
+  Reader &operator=(const Reader &) = default;
+  Reader &operator=(Reader &&) = default;
   ~Reader();
 
   /// @brief Get the manifest as a json string.
   /// @return The manifest as a json string.
   /// @throws C2pa::Exception for errors encountered by the C2PA library.
-  string json() const;
+  [[nodiscard]] string json() const;
 
   /// @brief  Get a resource from the reader and write it to a file.
   /// @param uri The uri of the resource.
   /// @param path The path to write the resource to.
   /// @return The number of bytes written.
   /// @throws C2pa::Exception for errors encountered by the C2PA library.
-  int get_resource(const string &uri, const std::filesystem::path &path) const;
+  [[nodiscard]] int get_resource(const string &uri,
+                                 const std::filesystem::path &path) const;
 
   /// @brief  Get a resource from the reader  and write it to an output stream.
   /// @param uri The uri of the resource.
@@ -240,18 +257,22 @@ public:
   /// @param sign_cert The certificate to use for signing.
   /// @param tsa_uri  The TSA URI to use for time-stamping.
   Signer(SignerFunc *callback, C2paSigningAlg alg, const string &sign_cert,
-         const string &tsa_uri);
+         const std::optional<std::string> &tsa_uri);
 
   explicit Signer(C2paSigner *signer) : signer(signer) {}
 
+  Signer(const Signer &) = default;
+  Signer(Signer &&) = default;
+  Signer &operator=(const Signer &) = default;
+  Signer &operator=(Signer &&) = default;
   ~Signer();
 
   /// @brief  Get the size to reserve for a signature for this signer.
   /// @return Reserved size for the signature.
-  uintptr_t reserve_size() const;
+  [[nodiscard]] uintptr_t reserve_size() const;
 
   /// @brief  Get the C2paSigner
-  C2paSigner *c2pa_signer() const;
+  [[nodiscard]] C2paSigner *c2pa_signer() const;
 };
 
 /// @brief Builder class for creating a manifest.
@@ -354,7 +375,7 @@ public:
   /// @param format  The format of the mime type or extension of the asset.
   /// @return A vector containing the hashed placeholder.
   /// @throws C2pa::Exception for errors encountered by the C2PA library.
-  std::vector<unsigned char>
+  [[nodiscard]] std::vector<unsigned char>
   data_hashed_placeholder(uintptr_t reserved_size, const string &format) const;
 
   /// @brief Sign a Builder using the specified signer and data hash.
@@ -369,7 +390,8 @@ public:
   /// @throws C2pa::Exception for errors encountered by the C2PA library.
   std::vector<unsigned char>
   sign_data_hashed_embeddable(const Signer &signer, const string &data_hash,
-                              const string &format, istream *asset = nullptr);
+                              const string &format,
+                              istream *asset = nullptr) const;
 
   /// @brief convert an unformatted manifest data to an embeddable format.
   /// @param format The format for embedding into.
