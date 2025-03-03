@@ -644,7 +644,8 @@ std::vector<unsigned char> Builder::sign(const path &source_path,
       !std::filesystem::exists(dest_dir)) {
     std::filesystem::create_directories(dest_dir);
   }
-  std::fstream dest(dest_path, std::ios::binary);
+  std::fstream dest(dest_path, std::ios::binary | std::ios::trunc |
+                                   std::ios::in | std::ios::out);
   if (!dest.is_open()) {
     throw std::runtime_error("Failed to open destination file: " +
                              dest_path.string());
