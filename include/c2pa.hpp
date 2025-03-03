@@ -338,7 +338,7 @@ public:
   /// @return A vector containing the signed manifest bytes.
   /// @throws C2pa::Exception for errors encountered by the C2PA library.
   std::vector<unsigned char> sign(const string &format, istream &source,
-                                  ostream &dest, const Signer &signer) const;
+                                  iostream &dest, const Signer &signer) const;
 
   /// @brief Sign a file and write the signed data to an output file.
   /// @param source_path The path to the file to sign.

@@ -17,6 +17,7 @@
 ///          Thread safety is not guaranteed due to the use of errno and etc.
 
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <exception>
 #include <filesystem> // C++17
@@ -190,7 +191,7 @@ intptr_t CppIStream::reader(StreamContext *context, uint8_t *buffer,
     if (!istream->eof()) {
       // do not report eof as an error
       errno = EINVAL; // Invalid argument
-      // std::perror("Error: Invalid argument");
+      // std::cout << "Error: Invalid argument in istream\n";
       return -1;
     }
   }
@@ -606,10 +607,10 @@ void Builder::add_ingredient(const string &ingredient_json,
 }
 
 std::vector<unsigned char> Builder::sign(const string &format, istream &source,
-                                         ostream &dest,
+                                         iostream &dest,
                                          const Signer &signer) const {
   const auto c_source = CppIStream(source);
-  const auto c_dest = CppOStream(dest);
+  const auto c_dest = CppIOStream(dest);
   const unsigned char *c2pa_manifest_bytes = nullptr;
   const auto result = c2pa_builder_sign(
       builder, format.c_str(), c_source.c_stream, c_dest.c_stream,
@@ -643,7 +644,7 @@ std::vector<unsigned char> Builder::sign(const path &source_path,
       !std::filesystem::exists(dest_dir)) {
     std::filesystem::create_directories(dest_dir);
   }
-  std::ofstream dest(dest_path, std::ios::binary);
+  std::fstream dest(dest_path, std::ios::binary);
   if (!dest.is_open()) {
     throw std::runtime_error("Failed to open destination file: " +
                              dest_path.string());
